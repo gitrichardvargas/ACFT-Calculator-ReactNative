@@ -4,11 +4,11 @@ import { AntDesign } from '@expo/vector-icons'
 
 import { Text, Pressable ,Button, View, StyleSheet } from 'react-native'
 
-export default function Exercise ({units, addFunc, exercise, raw, points, decreaseFunc,}) {
+export default function Exercise ({units, increaseFunc, decreaseFunc, exerciseName, raw, points, }) {
 
     return(
         <View style={ExStyles.mainContainer}>
-          <Text style={ExStyles.exerciseTitle}>{exercise}</Text>
+          <Text style={ExStyles.exerciseTitle}>{exerciseName}</Text>
           <View style={ExStyles.btnContainer}>
             <Pressable
               style={({ pressed }) => [
@@ -30,7 +30,7 @@ export default function Exercise ({units, addFunc, exercise, raw, points, decrea
                   {backgroundColor: pressed? '#85E785': '#FFCB05'},
                   ExStyles.btn
               ]}
-              onPress={addFunc}
+              onPress={increaseFunc}
               >
                <AntDesign name="pluscircle" size={25} color="black" />
             </Pressable>

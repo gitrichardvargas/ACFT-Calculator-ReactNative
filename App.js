@@ -1,121 +1,122 @@
 import React, { useState, useEffect } from 'react'
 import { Text, View, ScrollView, StyleSheet } from 'react-native';
 import Total from './Components/Total'
-//components
+// view components
 import Exercise from './Components/Exercise'
 import TimedExercise from './Components/TimedExercise'
 import ExerciseDec from './Components/ExerciseDec'
-import GetDeadliftScores from './Components/GetDeadlift'
-import GetBallThrowScores from './Components/GetBallThrow'
-import GetPushupScores from './Components/GetPushUps'
-import GetSprintDragCarryScores from './Components/GetSprintDragCarry'
-import GetLegTuckScores from './Components/GetLegTucks'
-import GetTwoMileScores from './Components/GetTwoMile'
-
-
-
+// all possible times 
+import ValidTimes from './Components/Data/ValidTimes'
+// subclass for individual scores
+import SoldierSimpleACFT from './Components/GetScore' // also has ACFTDATA from Data 
 
 
 export default function App() {
- const [deadliftRaw, setDeadliftRaw] = useState(200)
- const [ballThrowRaw, setBallThrowRaw] = useState(8)
- const [pushupsRaw, setPushupsRaw] = useState(30)
- const [sprintDragRawMin, setSprintDragRawMin] = useState(2)
- const [sprintDragRawSec, setSprintDragRawSec] = useState(10)
- const [legTuckRaw, setLegTuckRaw] = useState(5)
- const [twoMileRawMin, setTwoMileRawMin] = useState(18)
- const [twoMileRawSec, setTwoMileRawSec] = useState(0)
+  // intervals for sliders 
+  // subsets of ValidTime, more complicated given how the model vs view handle time 
+  // each second is an index, ValidTimes[60] is the index at the minute mark 
+  const plankTimeInterval = ValidTimes.slice(0, 4 * 60) 
+  const sprintDragCarryTimeInterval = ValidTimes(60, 5*60)
+  const TwoMileRunTimeInterval = ValidTimes(8*60, 27*60)
+  // deadlift weight valid interval 
+  const deadliftWeightInterval = Array.from({ length: 35 }, (_, lbs) => lbs * 10)
+  // hand release pushups reps valid interval 
+  const handReleasePushupsInterval = Array.from({ length: 70 }, (_, pushup) => pushup)
+  // standing power throw distance valid interval 
+  const standingPowerThrowInterval = Array.from({ length: 180 }, (_, m) => m / 10)
+  // state 
+  const [deadliftRaw, setDeadliftRaw] = useState(200)
+  const [ballThrowRaw, setBallThrowRaw] = useState(8)
+  const [pushupsRaw, setPushupsRaw] = useState(30)
+  const [sprintDragCarryRaw, setSprintDragCarryRaw] = useState(200) // 2:00 or 2 minutes
+  const [plankRaw, setPlankRaw] = useState(130) // 1:30
+  const [twoMileRaw, setTwoMileRaw] = useState(1600) // 16:00
+  // temporary place holder for age, gender, and cardio title 
+  const gender = 'male' // will be its own view with options of 'female' and 'male'
+  const age = 30 // will be its own viw with a slidign scale of ages (17, 18, ..., 61, 62+)
+  const cardioTitle = 'Two Mile Run' // will later have option by the user to chose from alternative cardio: row, swim, walk, and bike
 
-
-
- // deadllift funcs
-  const addTenToDL = () => setDeadliftRaw(deadliftRaw+10)
-  const minusTenToDL  = () => setDeadliftRaw(deadliftRaw-10)
-//ball throw funcs
-  const addWholeMeterSPT = () => setBallThrowRaw(ballThrowRaw+1)
-  const minusWholeMeterSPT = () => setBallThrowRaw(ballThrowRaw-1)
-  const addPointOneMeterSPT = () => setBallThrowRaw(ballThrowRaw+.1)
-  const minusPointOneMeterSPT = () => setBallThrowRaw(ballThrowRaw-.1)
-  //push ups funcs
-  const addOneToPU = () => setPushupsRaw(pushupsRaw+1)
-  const minusOneToPU = () => setPushupsRaw(pushupsRaw-1)
-  //sprint drag carry funcs
-  const addOneMinSDC = () => setSprintDragRawMin(sprintDragRawMin+1)
-  const addOneSecSDC = () => setSprintDragRawSec(sprintDragRawSec+1)
-  const minusOneMinSDC = () => setSprintDragRawMin(sprintDragRawMin-1)
-  const minusOneSecSDC = () => setSprintDragRawSec(sprintDragRawSec-1)
-  const addMinClearSecSDC = () => {
-    setSprintDragRawMin(sprintDragRawMin+1)
-    setSprintDragRawSec(sprintDragRawSec-59)
-  }
-  const minusMinMaxSecSDC = () => {
-    setSprintDragRawMin(sprintDragRawMin-1)
-    setSprintDragRawSec(sprintDragRawSec+59)
-  }
-  //legtucks funcs
-  const addOneToLT = () => setLegTuckRaw(legTuckRaw+1)
-  const minusOneToLT = () => setLegTuckRaw(legTuckRaw-1)
-  //two mile funcs 
-  const addOneMinTM = () => setTwoMileRawMin(twoMileRawMin+1)
-  const addOneSecTM = () => setTwoMileRawSec(twoMileRawSec+1)
-  const minusOneMinTM = () => setTwoMileRawMin(twoMileRawMin-1)
-  const minusOneSecTM = () => setTwoMileRawSec(twoMileRawSec-1)
-  const addMinClearSecTM = () => {
-    setTwoMileRawMin(twoMileRawMin+1)
-    setTwoMileRawSec(twoMileRawSec-59)
-  }
-  const minusMinMaxSecTM = () => {
-    setTwoMileRawMin(twoMileRawMin-1)
-    setTwoMileRawSec(twoMileRawSec+59)
-  }
-
-
+   // universal state change function
+  const changeRawScore = (change, stateToChange, changeState) => changeState(stateToChange + change)
+  // object from subclass for individual users and no SQLite usage
+  // once proven to be working we'll make this a conditional assignment for alternate cardio events 
+  const simpleJack = new SoldierSimpleACFT(
+    age, gender, deadliftRaw, ballThrowRaw, pushupsRaw, 
+    sprintDragCarryRaw, plankRaw, twoMileRaw) 
+  // when populating a database for an excel file rank, firstName, lastName will be needed 
   return (
-    <View style ={styles.myApp}>
-    <View style={styles.myHeadingWrapper}>
-      <Text style={styles.myHeading}>ACFT CALCULATOR</Text>
+    <View style={styles.myApp}>
+      <View style={styles.myHeadingWrapper}>
+        <Text style={styles.myHeading}>ACFT CALCULATOR</Text>
+      </View>
+      <ScrollView style={styles.container}>
+        {/* Max Deadlift */}
+        <Exercise
+          increaseFunc={() => changeRawScore(10, deadliftRaw, setDeadliftRaw)}
+          decreaseFunc={() => changeRawScore(-10, deadliftRaw, setDeadliftRaw)}
+          exerciseName="Max Deadlift (3 reps)"
+          units="lbs"
+          raw={deadliftRaw}
+          points={simpleJack.dl}
+        />
+
+        {/* Ball Throw */}
+        <ExerciseDec //only exercise with decimals standing power through is hardcoded as the title 
+          increaseFunc={() => changeRawScore(1, ballThrowRaw, setBallThrowRaw)}
+          decreaseFunc={() => changeRawScore(-1, ballThrowRaw, setBallThrowRaw)}
+          raw={ballThrowRaw}
+          points={simpleJack.spt}
+        />
+
+        {/* Hand Release Pushups */}
+        <Exercise 
+          increaseFunc={() => changeRawScore(1, pushupsRaw, setPushupsRaw)}
+          decreaseFunc={() => changeRawScore(-1, pushupsRaw, setPushupsRaw)}
+          exerciseName="Hand Release Pushups"
+          units="reps"
+          raw={pushupsRaw}
+          points={simpleJack.hrp}
+        />
+
+        {/* Sprint Drag Carry */}
+        <TimedExercise 
+          timedExerciseName={'Sprint Drag Carry'}
+          rawTime = {sprintDragCarryRaw} // time is written as an integer 100 = 1:00 or 1 minute
+          addOneMin={() => changeRawScore(100, sprintDragCarryRaw, setSprintDragCarryRaw)} 
+          minusOneMin={() => changeRawScore(-100, sprintDragCarryRaw, setSprintDragCarryRaw)} 
+          addOneSec={() => changeRawScore(1, sprintDragCarryRaw, setSprintDragCarryRaw)}  
+          minusOneSec={() => changeRawScore(-1, sprintDragCarryRaw, setSprintDragCarryRaw)} 
+          timedPoints={simpleJack.sdc}
+        />
+
+        {/* Plank */}
+        <TimedExercise 
+          timedExerciseName={'Plank'}
+          rawTime = {plankRaw} // time is written as an integer 100 = 1:00 or 1 minute
+          addOneMin={() => changeRawScore(100, plankRaw, setPlankRaw)} 
+          minusOneMin={() => changeRawScore(-100, plankRaw, setPlankRaw)} 
+          addOneSec={() => changeRawScore(1, plankRaw, setPlankRaw)} 
+          minusOneSec={() => changeRawScore(-1, plankRaw, setPlankRaw)} 
+          timedPoints={simpleJack.plk}
+        />
+
+        {/* Two Mile Run */}
+        <TimedExercise 
+          timedExerciseName={cardioTitle}
+          rawTime = {twoMileRaw} // time is written as an integer 100 = 1:00 or 1 minute
+          addOneMin={() => changeRawScore(100, twoMileRaw, setTwoMileRaw)} 
+          minusOneMin={() => changeRawScore(-100, twoMileRaw, setTwoMileRaw)} 
+          addOneSec={() => changeRawScore(1, twoMileRaw, setTwoMileRaw)} 
+          minusOneSec={() => changeRawScore(-1, twoMileRaw, setTwoMileRaw)} 
+          timedPoints={simpleJack.cardio}
+        />
+
+        {/* Total Score */}
+        <Total
+          total = {simpleJack.getTotalScore()}
+        />
+      </ScrollView>
     </View>
-    <ScrollView style={styles.container}>
-      
-      
-      <Exercise addFunc={addTenToDL} exercise="Max Deadlift (3 reps)" units="lbs" raw={deadliftRaw} 
-      points={GetDeadliftScores(deadliftRaw)} decreaseFunc={minusTenToDL} />
-      
-      <ExerciseDec minusPointOneMeterSPT={minusPointOneMeterSPT} addPointOneMeterSPT={addPointOneMeterSPT}
-       minusWholeMeterSPT={minusWholeMeterSPT} addWholeMeterSPT={addWholeMeterSPT} raw={ballThrowRaw} 
-       points={GetBallThrowScores(ballThrowRaw)}/>
-       
-      <Exercise addFunc={addOneToPU} exercise="Hand Release Pushups" units="reps" raw={pushupsRaw} 
-      points={GetPushupScores(pushupsRaw)} decreaseFunc={minusOneToPU}  />
-      
-      <TimedExercise timedExercise={'Sprint Drag Carry'} rawMin={sprintDragRawMin} rawSec={sprintDragRawSec}
-       addOneMin={addOneMinSDC} minusOneMin={minusOneMinSDC} addOneSec={addOneSecSDC} 
-       minusOneSec={minusOneSecSDC} minusMinMaxSec={minusMinMaxSecSDC} addMinClearSec={addMinClearSecSDC} 
-       timedPoints={GetSprintDragCarryScores}/>
-       
-      <Exercise addFunc={addOneToLT} exercise="Leg Tucks" units="reps" raw={legTuckRaw} 
-      points={GetLegTuckScores(legTuckRaw)} decreaseFunc={minusOneToLT}  />
-      
-      <TimedExercise timedExercise={'Two Mile Run'}rawMin={twoMileRawMin} rawSec={twoMileRawSec} 
-      addOneMin={addOneMinTM} minusOneMin={minusOneMinTM} addOneSec={addOneSecTM} 
-      minusOneSec={minusOneSecTM} minusMinMaxSec={minusMinMaxSecTM} addMinClearSec={addMinClearSecTM} 
-      timedPoints={GetTwoMileScores}/>
-      
-      <Total  
-      deadlift={GetDeadliftScores(deadliftRaw)} 
-      ballThrow={GetBallThrowScores(ballThrowRaw)} 
-      pushups={GetPushupScores(pushupsRaw)} 
-      sprintDragCarry={GetSprintDragCarryScores(sprintDragRawMin)(sprintDragRawSec)} 
-      //temp
-      // sprintDragCarry={70}
-      legtuck={GetLegTuckScores(legTuckRaw)} 
-      twoMile={GetTwoMileScores(twoMileRawMin)(twoMileRawSec)}
-      //temp
-      // twoMile={70}
-      />
-    </ScrollView>
-    </View>
-    
   )
 }
 

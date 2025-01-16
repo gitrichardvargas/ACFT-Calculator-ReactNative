@@ -4,9 +4,9 @@ import { Text, Pressable ,Button, View, StyleSheet } from 'react-native'
 
 
 
-export default function Total ({deadlift, ballThrow,pushups, sprintDragCarry, legtuck, twoMile,}){
+export default function Total ({total}){
   return(
-    <Text style={styles.total}>Total Score: {deadlift+ballThrow+pushups+sprintDragCarry+legtuck+twoMile}</Text>
+    <Text style={styles.total}>Total Score: {total}</Text>
   )}
   
  
@@ -19,4 +19,4 @@ const styles = StyleSheet.create({
 
   },
   
-});
+})

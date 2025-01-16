@@ -2,11 +2,19 @@ import React, { useState, useEffect } from 'react'
 import { AntDesign } from '@expo/vector-icons'
 import { Text, Pressable ,Button, View, StyleSheet, } from 'react-native'
 
-export default function TimedExercise ({ timedExercise, rawMin, rawSec, addOneMin, minusOneMin, addOneSec, minusOneSec, addMinClearSec, minusMinMaxSec, timedPoints }) {
-
+export default function TimedExercise ({ timedExerciseName, rawTime, addOneMin, minusOneMin, addOneSec, minusOneSec, addMinClearSec, minusMinMaxSec, timedPoints }) {
+    // // logic for timed events here 
+// function getRawTime(rawMin, rawSec) {
+//   // rawMin and rawSec are integers
+//   // the model assumes mm:ss format for time -> 245 is 2:45 or two minutes and 45 seconds
+//   const timeString = String(rawMin) + String(rawSec) 
+//   const time = parseInt(timeString, 10) // converts back to integer
+//   return time 
+// }
+// const rawTime = getRawTime(rawMin, rawSec)
     return (
         <View style={ExTimedStyles.mainContainer}>
-          <Text style={ExTimedStyles.exerciseTitle}>{timedExercise}</Text>
+          <Text style={ExTimedStyles.exerciseTitle}>{timedExerciseName}</Text>
           <View style={ExTimedStyles.btnContainer}>
             <View style={ExTimedStyles.minuteWrapper}>
               <Text style={ExTimedStyles.minutesText}>Mintues</Text>
@@ -17,7 +25,7 @@ export default function TimedExercise ({ timedExercise, rawMin, rawSec, addOneMi
                         ExTimedStyles.btn
                     ]}
                     onPress={ 
-                    () => {if (rawMin > 0 ){minusOneMin()}}
+                    () => {if (rawTime >= 100 ){minusOneMin()}}
                     }
                 >
                 <AntDesign name="minuscircle" size={25} color="black" />
