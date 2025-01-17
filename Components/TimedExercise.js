@@ -1,112 +1,111 @@
-import React, { useState, useEffect } from 'react'
+import React from 'react'
 import { AntDesign } from '@expo/vector-icons'
-import { Text, Pressable ,Button, View, StyleSheet, } from 'react-native'
+import { Text, Pressable, View, StyleSheet } from 'react-native'
 
-export default function TimedExercise ({ timedExerciseName, rawTime, addOneMin, minusOneMin, addOneSec, minusOneSec, addMinClearSec, minusMinMaxSec, timedPoints }) {
-    // // logic for timed events here 
-// function getRawTime(rawMin, rawSec) {
-//   // rawMin and rawSec are integers
-//   // the model assumes mm:ss format for time -> 245 is 2:45 or two minutes and 45 seconds
-//   const timeString = String(rawMin) + String(rawSec) 
-//   const time = parseInt(timeString, 10) // converts back to integer
-//   return time 
-// }
-// const rawTime = getRawTime(rawMin, rawSec)
-    return (
-        <View style={ExTimedStyles.mainContainer}>
-          <Text style={ExTimedStyles.exerciseTitle}>{timedExerciseName}</Text>
-          <View style={ExTimedStyles.btnContainer}>
-            <View style={ExTimedStyles.minuteWrapper}>
-              <Text style={ExTimedStyles.minutesText}>Mintues</Text>
-              <View style={ExTimedStyles.minuteBtns}>
-                <Pressable 
-                    style={({ pressed }) => [
-                        {backgroundColor: pressed? '#85E785': '#FFCB05'},
-                        ExTimedStyles.btn
-                    ]}
-                    onPress={ 
-                    () => {if (rawTime >= 100 ){minusOneMin()}}
-                    }
-                >
-                <AntDesign name="minuscircle" size={25} color="black" />
-                </Pressable>
-                <Pressable 
-                    style={({ pressed }) => [
-                          {backgroundColor: pressed? '#EE7206': '#FFCB05'},
-                          ExTimedStyles.btn
-                      ]}
-                    onPress={addOneMin}
-                >
-                <AntDesign name="pluscircle" size={25} color="black" />
-                </Pressable>
-              </View>
-            </View> 
-            <View style={ExTimedStyles.secondsWrapper}>
-              <Text style={ExTimedStyles.secondsText}>Seconds</Text>
-              <View style={ExTimedStyles.secondsBtn}>
-                <Pressable 
-                  style={({ pressed }) => [
-                        {backgroundColor: pressed? '#85E785': '#FFCB05'},
-                        ExTimedStyles.btn
-                    ]}
-                  onPress={()=> {if(rawSec >= 1){minusOneSec()} else if (rawSec === 0){minusMinMaxSec()}}} 
-                >
-                <AntDesign name="minuscircle" size={25} color="black" />
-                </Pressable>
-                <Pressable 
-                  style={({ pressed }) => [
-                        {backgroundColor: pressed? '#EE7206': '#FFCB05'},
-                        ExTimedStyles.btn
-                    ]}
-                  onPress={()=> {if(rawSec <= 58){addOneSec()} else if (rawSec === 59) {addMinClearSec()}}}
-                >
-                <AntDesign name="pluscircle" size={25} color="black" />
-                </Pressable>
-              </View>
-            </View>
+export default function TimedExercise({ 
+  timedExerciseName, 
+  rawTime, 
+  addOneMin, 
+  minusOneMin, 
+  addOneSec, 
+  minusOneSec, 
+  timedPoints 
+}) {
+  // format raw time to "mm:ss"
+  const formatTime = (time) => {
+    const minutes = Math.floor(time / 100)
+    const seconds = time % 100
+    return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`
+  }
+
+  return (
+    <View style={styles.mainContainer}>
+      <Text style={styles.exerciseTitle}>{timedExerciseName}</Text>
+      <View style={styles.btnContainer}>
+        {/* Minute Controls */}
+        <View style={styles.minuteWrapper}>
+          <Text style={styles.minutesText}>Minutes</Text>
+          <View style={styles.minuteBtns}>
+            <Pressable
+              style={({ pressed }) => [
+                { backgroundColor: pressed ? '#85E785' : '#FFCB05' },
+                styles.btn
+              ]}
+              onPress={minusOneMin}
+            >
+              <AntDesign name="minuscircle" size={25} color="black" />
+            </Pressable>
+            <Pressable
+              style={({ pressed }) => [
+                { backgroundColor: pressed ? '#EE7206' : '#FFCB05' },
+                styles.btn
+              ]}
+              onPress={addOneMin}
+            >
+              <AntDesign name="pluscircle" size={25} color="black" />
+            </Pressable>
           </View>
-          <Text>Raw: {rawMin}:{rawSec < 10? '0'+rawSec: rawSec}          Score: {timedPoints(rawMin)(rawSec)}</Text>
         </View>
-    )
+
+        {/* Second Controls */}
+        <View style={styles.secondsWrapper}>
+          <Text style={styles.secondsText}>Seconds</Text>
+          <View style={styles.secondsBtns}>
+            <Pressable
+              style={({ pressed }) => [
+                { backgroundColor: pressed ? '#85E785' : '#FFCB05' },
+                styles.btn
+              ]}
+              onPress={minusOneSec}
+            >
+              <AntDesign name="minuscircle" size={25} color="black" />
+            </Pressable>
+            <Pressable
+              style={({ pressed }) => [
+                { backgroundColor: pressed ? '#EE7206' : '#FFCB05' },
+                styles.btn
+              ]}
+              onPress={addOneSec}
+            >
+              <AntDesign name="pluscircle" size={25} color="black" />
+            </Pressable>
+          </View>
+        </View>
+      </View>
+      <Text>
+        Raw Time: {formatTime(rawTime)}          Score: {timedPoints}
+      </Text>
+    </View>
+  )
 }
 
-const ExTimedStyles = StyleSheet.create({
+const styles = StyleSheet.create({
   mainContainer: {
     display: 'flex',
     alignItems: 'center',
   },
   btnContainer: {
-    // backgroundColor: 'pink',
-    // flex: 1,
     display: 'flex',
     justifyContent: 'center',
     flexDirection: 'row',
-    // alignItems: 'center',
   },
   btn: {
     display: 'flex',
     color: 'white',
-    width: 35, 
+    width: 35,
     height: 35,
     margin: 2,
     borderWidth: 2,
     borderRadius: 25,
-    alignSelf: 'stretch',
     textAlign: 'center',
-    flexDirection: 'row',
     justifyContent: 'center',
-    flexDirection: 'row',
     alignItems: 'center',
-  },
-  btnText: {
-    textAlign: 'center',
-    color: 'white',
   },
   exerciseTitle: {
     fontWeight: 'bold',
     fontSize: 20,
   },
-  minuteWrapper:{
+  minuteWrapper: {
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
@@ -118,22 +117,16 @@ const ExTimedStyles = StyleSheet.create({
     display: 'flex',
     flexDirection: 'row',
   },
-  secondsWrapper:{
-  display: 'flex',
+  secondsWrapper: {
+    display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  secondsBtn: {
+  secondsBtns: {
     display: 'flex',
     flexDirection: 'row',
   },
   secondsText: {
     opacity: 0.5,
   },
-
-});
-
-
-
-
-
+})

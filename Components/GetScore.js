@@ -1,5 +1,5 @@
-import ACFTDATA from '../Data/ACFTDATA'
-class SoldierScoreACFT {
+
+export class SoldierScoreACFT {
     constructor(rank, lastName, firstName, age, gender, dl, spt, hrp, sdc, plk, cardio, altCardio = null) {
       // error handling 
       if (typeof rank !== "string") throw new Error("Rank must be a string");
@@ -80,7 +80,7 @@ class SoldierScoreACFT {
   }
   
 
-class SoldierSimpleACFT extends SoldierScoreACFT {
+export class SoldierSimpleACFT extends SoldierScoreACFT {
     constructor(age, gender, dl, spt, hrp, sdc, plk, cardio) {
         // Call the parent class constructor
         super(
