@@ -21,7 +21,7 @@ const ScaleIdentifier = ({ onGenderChange, onAgeChange, onCardioChange }) => {
                 style={styles.picker}
                 mode="dropdown"
                 >
-                <Picker.Item label="Male" value="male" />
+                <Picker.Item label="Male" value="male" style={styles.selectedText}/>
                 <Picker.Item label="Female" value="female" />
                 </Picker>
             </View>
@@ -54,7 +54,7 @@ const ScaleIdentifier = ({ onGenderChange, onAgeChange, onCardioChange }) => {
                 style={styles.picker}
                 mode="dropdown"
                 >
-                <Picker.Item label="Run" value="Two Mile Run" />
+                <Picker.Item label="Run" value="Two Mile Run" style={styles.selectedText}/>
                 <Picker.Item label="Bike" value="Bike" />
                 <Picker.Item label="Row" value="Row" />
                 <Picker.Item label="Swim" value="Swim" />
@@ -81,32 +81,45 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'flex-start',
     padding: 0,
-    margin: 0,
+    marginLeft: -30,
+    marginRight: -30, 
     marginBottom: 20, 
+    // backgroundColorolor: 'purple',
+
   },
   pickerWrapper: {
     flex: 1,
-    padding: 0,
+    paddingBottom: 50,
+    paddingRight: 70, 
+    // paddingLeft: 55, 
     justifyContent: 'flex-start',
-    maxWidth: 170,
+    // maxWidth: 300,
+    backgroundColor: "#B2B4B3", 
+    marginHorizontal: 5, 
+    width: 145, 
+    borderRadius: 10, 
   },
 label: {
     fontWeight: 'bold',
     textAlign: 'center',
-    margin: 5, 
-    marginBottom: 30, 
-    marginTop: 5,    
+    margin: 10, 
+    // marginRight: 70, 
+    // marginBottom: 30, 
+    marginTop: 0,
+    marginLeft: 0,     
     fontSize: 30,
     borderColor: 'grey',
-    paddingTop: 5,   
-    paddingBottom: 5,
+    paddingTop: 0,   
+    // paddingBottom: 5,
     backgroundColor: '#FFCB05',
     marginHorizontal: 5, 
     borderRadius: 10,    
-    padding: 0, 
-    borderWidth: .5,
+    padding: 1, 
+    borderWidth: 2,
     borderColor: 'grey',
-    width: 125, 
+    width: 135, 
+    color: 'black',
+    zIndex: 10,
   },
   
   wideLabel: {
@@ -129,8 +142,19 @@ label: {
   picker: {
     height: 40,
     justifyContent: 'center',
-    width: 125, 
+    width: 135,  
+    // backgroundColor: 'purple', 
+    // opacity: 1,
+    color: 'purple'
+    
   },
+
+  selectedText: {
+    color: 'purple', 
+  }
+  
 })
+
+
 
 export default ScaleIdentifier
