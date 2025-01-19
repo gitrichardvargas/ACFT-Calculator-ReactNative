@@ -2,24 +2,43 @@ import React, { useState, useEffect } from 'react'
 import { Text, View, ScrollView, StyleSheet } from 'react-native'
 
 import ValidTimes from './Components/Data/ValidTimes' // all possible times 
-import ACFTDATA from './Data/ACFTDATA' // ACFTDAT
 // subclass for individual scores
-import { SoldierSimpleACFT } from './Components/Data/GetScore' // also has ACFTDATA from Data 
+import { SoldierSimpleACFT } from './Components/GetScores'
 
 // view components
 import Exercise from './Components/Exercise'
 import TimedExercise from './Components/TimedExercise'
 import ExerciseDec from './Components/ExerciseDec'
 import Total from './Components/Total'
-
+import ScaleIdentifier from './Components/ScaleIdentifier'
 
 export default function App() {
+  //gender, age and alt cardio 
+  const [gender, setGender] = useState('male')
+  const [age, setAge] = useState(30)
+  const [cardio, setCardio] = useState('Two Mile Run')
+  const handleGenderChange = (newGender) => {
+    setGender(newGender)
+    console.log('Gender changed to:', newGender)
+  }
+  // alt cardio 
+  
+  const handleAgeChange = (newAge) => {
+    setAge(newAge)
+    console.log('Age changed to:', newAge)
+  }
+  const handleCardioChange = (newCardio) => {
+    setCardio(newCardio)
+    console.log('Cardio changed to:', newCardio)
+  }
   // intervals for sliders 
   // subsets of ValidTime, more complicated given how the model vs view handle time 
   // each second is an index, ValidTimes[60] is the index at the minute mark 
   const plankTimeInterval = ValidTimes.slice(0, 4 * 60) 
   const sprintDragCarryTimeInterval = ValidTimes.slice(60, 5*60)
-  const twoMileRunTimeInterval = ValidTimes.slice(8*60, 27*60)
+  const twoMileRunTimeInterval = ValidTimes.slice(12*60, 27*60)
+  const altCardioTimeInterval = ValidTimes.slice(12*60, 45*60)
+
   // deadlift weight valid interval 
   const deadliftWeightInterval = Array.from({ length: 35 }, (_, lbs) => lbs * 10)
   // hand release pushups reps valid interval 
@@ -41,21 +60,18 @@ export default function App() {
   const pushupsRaw = handReleasePushupsInterval[pushupsIndex]
 
   const [sprintDragCarryIndex, setSprintDragCarryIndex] = useState(getMidPoint(sprintDragCarryTimeInterval))
-  const sprintDragCarryRaw = sprintDragCarryTimeInterval[sprintDragCarryIndex]
+  const sprintDragCarryRaw = sprintDragCarryTimeInterval[sprintDragCarryIndex].raw
 
   const [plankIndex, setPlankIndex] = useState(getMidPoint(plankTimeInterval))
-  const plankRaw = plankTimeInterval[plankIndex]
+  const plankRaw = plankTimeInterval[plankIndex].raw
 
   const [twoMileIndex, setTwoMileIndex] = useState(getMidPoint(twoMileRunTimeInterval))
-  const twoMileRaw = twoMileRunTimeInterval[twoMileIndex]
+  const twoMileRaw = twoMileRunTimeInterval[twoMileIndex].raw 
+  // alternative cardio 
+  const [altCardioIndex, setAltCardioIndex] = useState(getMidPoint(altCardioTimeInterval))
+  const altCardioRaw = altCardioTimeInterval[altCardioIndex].raw 
 
-  // temporary place holder for age, gender, and cardio title 
-  const gender = 'male' // will be its own view with options of 'female' and 'male'
-  const age = 30 // will be its own viw with a slidign scale of ages (17, 18, ..., 61, 62+)
-  const cardioTitle = 'Two Mile Run' // will later have option by the user to chose from alternative cardio: row, swim, walk, and bike
-
-   // universal state change function
-  // const changeRawScore = (change, stateToChange, changeState) => changeState(stateToChange + change)
+   // universal exercise state change function 
   const changeRawScore = (change, currentIndex, setIndex, interval) => {
     const newIndex = currentIndex + change
     // ensure the index stays within bounds
@@ -65,16 +81,24 @@ export default function App() {
   }
   // object from subclass for individual users and no SQLite usage
   // once proven to be working we'll make this a conditional assignment for alternate cardio events 
+  // const simpleJack = new SoldierSimpleACFT(
+  //   age, gender, deadliftRaw, ballThrowRaw, pushupsRaw, 
+  //   sprintDragCarryRaw, plankRaw, twoMileRaw, null) 
   const simpleJack = new SoldierSimpleACFT(
-    age, gender, deadliftRaw, ballThrowRaw, pushupsRaw, 
-    sprintDragCarryRaw, plankRaw, twoMileRaw) 
+      age, gender, deadliftRaw, ballThrowRaw, pushupsRaw,
+      sprintDragCarryRaw,plankRaw,
+      cardio === "Two Mile Run" ? twoMileRaw : altCardioRaw,
+      cardio === "Two Mile Run" ? null : cardio.toLowerCase()
+  )
   // when populating a database for an excel file rank, firstName, lastName will be needed 
   return (
     <View style={styles.myApp}>
       <View style={styles.myHeadingWrapper}>
         <Text style={styles.myHeading}>ACFT CALCULATOR</Text>
       </View>
-      <ScrollView style={styles.container}>
+      
+      <ScrollView contentContainerStyle={styles.container}>
+        <ScaleIdentifier onGenderChange={handleGenderChange} onAgeChange={handleAgeChange} onCardioChange={handleCardioChange} />
         {/* Max Deadlift */}
         <Exercise
           increaseFunc={() => changeRawScore(1, deadliftIndex, setDeadliftIndex, deadliftWeightInterval)}
@@ -82,15 +106,19 @@ export default function App() {
           exerciseName="Max Three Rep Deadlift"
           units="lbs"
           raw={deadliftRaw}
-          points={simpleJack.dl}
+          points={simpleJack.getIndividualScores()['deadlift']}
+          maxVal={340}
         />
 
-        {/* Ball Throw */}
+        {/* Ball Throw , , , addWholeMeterSPT, raw, points*/}
         <ExerciseDec //only exercise with decimals standing power through is hardcoded as the title 
-          increaseFunc={() => changeRawScore(1, ballThrowIndex, setBallThrowIndex, standingPowerThrowInterval)}
-          decreaseFunc={() => changeRawScore(-1, ballThrowIndex, setBallThrowIndex, standingPowerThrowInterval)}
+          minusPointOneMeterSPT ={() => changeRawScore(-1, ballThrowIndex, setBallThrowIndex, standingPowerThrowInterval)}
+          addPointOneMeterSPT = {() => changeRawScore(1, ballThrowIndex, setBallThrowIndex, standingPowerThrowInterval)}
+          minusWholeMeterSPT={() => changeRawScore(-10, ballThrowIndex, setBallThrowIndex, standingPowerThrowInterval)}
+          addWholeMeterSPT={() => changeRawScore(10, ballThrowIndex, setBallThrowIndex, standingPowerThrowInterval)}
           raw={ballThrowRaw}
-          points={simpleJack.spt}
+          points={simpleJack.getIndividualScores()['standing power throw']}
+          maxVal={18.0}
         />
 
         {/* Hand Release Pushups */}
@@ -100,18 +128,19 @@ export default function App() {
           exerciseName="Hand Release Pushups"
           units="reps"
           raw={pushupsRaw}
-          points={simpleJack.hrp}
+          points={simpleJack.getIndividualScores()['hand release pushups']}
+          maxVal={65}
         />
-
+        
         {/* Sprint Drag Carry */}
         <TimedExercise 
           timedExerciseName={'Sprint Drag Carry'}
-          rawTime = {sprintDragCarryRaw} // time is written as an integer 100 = 1:00 or 1 minute
+          rawTime={sprintDragCarryRaw} // time is written as an integer 100 = 1:00 or 1 minute
           addOneMin={() => changeRawScore(
-            100, sprintDragCarryIndex, setSprintDragCarryIndex, sprintDragCarryTimeInterval
+            60, sprintDragCarryIndex, setSprintDragCarryIndex, sprintDragCarryTimeInterval
           )} 
           minusOneMin={() => changeRawScore(
-            -100, sprintDragCarryIndex, setSprintDragCarryIndex, sprintDragCarryTimeInterval
+            -60, sprintDragCarryIndex, setSprintDragCarryIndex, sprintDragCarryTimeInterval
           )} 
           addOneSec={() => changeRawScore(
             1, sprintDragCarryIndex, setSprintDragCarryIndex, sprintDragCarryTimeInterval
@@ -119,18 +148,26 @@ export default function App() {
           minusOneSec={() => changeRawScore(
             -1, sprintDragCarryIndex, setSprintDragCarryIndex, sprintDragCarryTimeInterval
           )} 
-          timedPoints={simpleJack.sdc}
+          addSlide={() => changeRawScore(
+            5, sprintDragCarryIndex, setSprintDragCarryIndex, sprintDragCarryTimeInterval
+          )}
+          minusSlide={() => changeRawScore(
+            -5, sprintDragCarryIndex, setSprintDragCarryIndex, sprintDragCarryTimeInterval
+          )}
+          minVal={sprintDragCarryTimeInterval[0].raw} // Starting from the first valid raw value
+          maxVal={sprintDragCarryTimeInterval[sprintDragCarryTimeInterval.length - 1].raw} // Ending at the last valid raw value
+          timedPoints={simpleJack.getIndividualScores()['sprint drag carry']}
         />
 
         {/* Plank */}
         <TimedExercise 
           timedExerciseName={'Plank'}
-          rawTime = {plankRaw} // time is written as an integer 100 = 1:00 or 1 minute
+          rawTime={plankRaw} // time is written as an integer 100 = 1:00 or 1 minute
           addOneMin={() => changeRawScore(
-            100, plankIndex, setPlankIndex, plankTimeInterval
+            60, plankIndex, setPlankIndex, plankTimeInterval
           )} 
           minusOneMin={() => changeRawScore(
-            -100, plankIndex, setPlankIndex, plankTimeInterval
+            -60, plankIndex, setPlankIndex, plankTimeInterval
           )} 
           addOneSec={() => changeRawScore(
             1, plankIndex, setPlankIndex, plankTimeInterval
@@ -138,33 +175,68 @@ export default function App() {
           minusOneSec={() => changeRawScore(
             -1, plankIndex, setPlankIndex, plankTimeInterval
           )} 
-          timedPoints={simpleJack.plk}
+          addSlide={() => changeRawScore(
+            5, plankIndex, setPlankIndex, plankTimeInterval
+          )}
+          minusSlide={() => changeRawScore(
+            -5, plankIndex, setPlankIndex, plankTimeInterval
+          )}
+          minVal={plankTimeInterval[0].raw} // Starting from the first valid raw value
+          maxVal={plankTimeInterval[plankTimeInterval.length - 1].raw} // Ending at the last valid raw value
+          timedPoints={simpleJack.getIndividualScores()['plank']}
         />
-
-        {/* Two Mile Run */}
-        <TimedExercise 
-          timedExerciseName={cardioTitle}
-          rawTime = {twoMileRaw} // time is written as an integer 100 = 1:00 or 1 minute
+       
+        {/* Cardio Event */}
+        <TimedExercise
+          timedExerciseName={cardio === 'Two Mile Run' ? 'Two Mile Run' : cardio} // Dynamically set name
+          rawTime={cardio === 'Two Mile Run' ? twoMileRaw : altCardioRaw} // Choose between twoMileRaw and altCardioRaw
           addOneMin={() => changeRawScore(
-            100, plankIndex, setPlankIndex, plankTimeInterval
-          )} 
+            60, 
+            cardio === 'Two Mile Run' ? twoMileIndex : altCardioIndex, 
+            cardio === 'Two Mile Run' ? setTwoMileIndex : setAltCardioIndex, 
+            cardio === 'Two Mile Run' ? twoMileRunTimeInterval : altCardioTimeInterval
+          )}
           minusOneMin={() => changeRawScore(
-            -100, plankIndex, setPlankIndex, plankTimeInterval
-          )} 
+            -60, 
+            cardio === 'Two Mile Run' ? twoMileIndex : altCardioIndex, 
+            cardio === 'Two Mile Run' ? setTwoMileIndex : setAltCardioIndex, 
+            cardio === 'Two Mile Run' ? twoMileRunTimeInterval : altCardioTimeInterval
+          )}
           addOneSec={() => changeRawScore(
-            1, plankIndex, setPlankIndex, plankTimeInterval
-          )}  
+            1, 
+            cardio === 'Two Mile Run' ? twoMileIndex : altCardioIndex, 
+            cardio === 'Two Mile Run' ? setTwoMileIndex : setAltCardioIndex, 
+            cardio === 'Two Mile Run' ? twoMileRunTimeInterval : altCardioTimeInterval
+          )}
           minusOneSec={() => changeRawScore(
-            -1, plankIndex, setPlankIndex, plankTimeInterval
-          )} 
-          timedPoints={simpleJack.cardio}
+            -1, 
+            cardio === 'Two Mile Run' ? twoMileIndex : altCardioIndex, 
+            cardio === 'Two Mile Run' ? setTwoMileIndex : setAltCardioIndex, 
+            cardio === 'Two Mile Run' ? twoMileRunTimeInterval : altCardioTimeInterval
+          )}
+          timedPoints={simpleJack.getIndividualScores()[cardio.toLowerCase()]} // dynamically set timedPoints
+          minusSlide={() => changeRawScore(
+            -15, 
+            cardio === 'Two Mile Run' ? twoMileIndex : altCardioIndex, 
+            cardio === 'Two Mile Run' ? setTwoMileIndex : setAltCardioIndex, 
+            cardio === 'Two Mile Run' ? twoMileRunTimeInterval : altCardioTimeInterval
+          )}
+          addSlide={() => changeRawScore(
+            15, 
+            cardio === 'Two Mile Run' ? twoMileIndex : altCardioIndex, 
+            cardio === 'Two Mile Run' ? setTwoMileIndex : setAltCardioIndex, 
+            cardio === 'Two Mile Run' ? twoMileRunTimeInterval : altCardioTimeInterval
+          )}
+          minVal={cardio === 'Two Mile Run' ? twoMileRunTimeInterval[0].raw : altCardioTimeInterval[0].raw}
+          maxVal={cardio === 'Two Mile Run' ? twoMileRunTimeInterval[twoMileRunTimeInterval.length - 1].raw : altCardioTimeInterval[altCardioTimeInterval.length - 1].raw}
         />
 
         {/* Total Score */}
-        <Total
+        <Total 
           total = {simpleJack.getTotalScore()}
         />
-      </ScrollView>
+        <View style={{ height: 160 }}></View>
+      </ScrollView> 
     </View>
   )
 }
@@ -176,14 +248,16 @@ const styles = StyleSheet.create({
       display: 'flex',
       flex: 1,
       flexDirection: 'column',
+      backgroundColor: '#E8E8D9',
   },
+
   container: {
-    flex: 1,
-    justifyContent: 'center',
+    flexGrow: 1,
+    justifyContent: 'flex-start',
     paddingTop: 0,
     backgroundColor: '#E8E8D9',
-    padding: 0,
-    paddingTop: 0,
+    padding: 10,
+    paddingBottom: 20,
     margin: 0,
     marginTop: 0, 
   },
